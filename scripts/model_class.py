@@ -101,7 +101,7 @@ class deepRL_model():
 		t = 0
 		while(1):
 		    # choose an action epsilon greedily
-			game_state.render()
+#			game_state.render()
 			readout_t = readout.eval(feed_dict = {s : [s_t]})[0]
 			a_t = np.zeros([ACTIONS])
 			action_index = 0
