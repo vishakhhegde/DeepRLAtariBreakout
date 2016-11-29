@@ -16,13 +16,14 @@ EXPLORE = 500. # frames over which to anneal epsilon
 FINAL_EPSILON = 0.05 # final value of epsilon
 INITIAL_EPSILON = 1.0 # starting value of epsilon
 REPLAY_MEMORY = 200000 # number of previous transitions to remember
-BATCH = 50 # size of minibatch
+BATCH = 128 # size of minibatch
 K = 1 # only select an action every Kth frame, repeat prev for others
 
 game_state = gym.make(GAME)
 
 def playGame():
-	sess = tf.InteractiveSession()
+	gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.46)
+	sess = tf.InteractiveSession(config=tf.ConfigProto(gpu_options=gpu_options))
 	Model =	deepRL_model()
 	s, readout, h_fc1 = Model.createBaseNetwork()
 #	s, readout, h_fc1 = createNetwork()
