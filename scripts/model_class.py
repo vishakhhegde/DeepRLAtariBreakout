@@ -175,6 +175,5 @@ class deepRL_model():
 				state = "explore"
 			else:
 				state = "train"
-			if r_t > 0:
-				print r_t
-			print "TIMESTEP", t, "/ STATE", state, "/ EPSILON", epsilon, "/ ACTION", action_index, "/ REWARD", r_t, "/ Q_MAX %e" % np.max(readout_t)
+			if t % 10000 == 0:
+				print "TIMESTEP", t, "/ STATE", state, "/ EPSILON", epsilon, "/ ACTION", action_index, "/ REWARD", r_t, "/ Q_MAX %e" % np.max(readout_t)
