@@ -10,11 +10,11 @@ from utils import *
 GAME = 'Breakout-v0'
 ACTIONS = 6 # number of valid actions
 GAMMA = 0.99 # decay rate of past observations
-OBSERVE = 500. # timesteps to observe before training
-EXPLORE = 500. # frames over which to anneal epsilon
+OBSERVE = 1000. # timesteps to observe before training
+EXPLORE = 1000. # frames over which to anneal epsilon
 FINAL_EPSILON = 0.05 # final value of epsilon
 INITIAL_EPSILON = 1.0 # starting value of epsilon
-REPLAY_MEMORY = 590000 # number of previous transitions to remember
+REPLAY_MEMORY = 500000 # number of previous transitions to remember
 BATCH = 128 # size of minibatch
 K = 1 # only select an action every Kth frame, repeat prev for others
 
@@ -175,5 +175,5 @@ class deepRL_model():
 				state = "explore"
 			else:
 				state = "train"
-			if t % 10000 == 0:
+			if t % 1000 == 0:
 				print "TIMESTEP", t, "/ STATE", state, "/ EPSILON", epsilon, "/ ACTION", action_index, "/ REWARD", r_t, "/ Q_MAX %e" % np.max(readout_t)
