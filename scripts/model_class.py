@@ -10,8 +10,8 @@ from utils import *
 GAME = 'Breakout-v0'
 ACTIONS = 6 # number of valid actions
 GAMMA = 0.99 # decay rate of past observations
-OBSERVE = 5000. # timesteps to observe before training
-EXPLORE = 5000. # frames over which to anneal epsilon
+OBSERVE = 10000. # timesteps to observe before training
+EXPLORE = 10000. # frames over which to anneal epsilon
 FINAL_EPSILON = 0.1 # final value of epsilon
 INITIAL_EPSILON = 1.0 # starting value of epsilon
 REPLAY_MEMORY = 500000 # number of previous transitions to remember
@@ -64,9 +64,6 @@ class deepRL_model():
 		cost = tf.reduce_mean(tf.square(y - readout_action))
 		train_step = tf.train.AdamOptimizer(1e-6).minimize(cost)
 
-	    # open up a game state to communicate with emulator
-	#	    game_state = game.GameState()
-
 	    # store the previous observations in replay memory
 		D = deque()
 
@@ -79,7 +76,6 @@ class deepRL_model():
 		do_nothing[0] = 1
 
 	# We need to change this
-	#	action = do_nothing.index(filter(lambda x: x!=0, do_nothing)[0])
 		action = np.where(do_nothing == 1)[0][0]
 		x_t, r_0, terminal, _ = game_state.step(action)
 		x_t = cv2.cvtColor(cv2.resize(x_t, (80, 80)), cv2.COLOR_BGR2GRAY)
@@ -118,7 +114,6 @@ class deepRL_model():
 
 			for i in range(0, K):
 	            # run the selected action and observe next state and reward
-	#			action = a_t.index(filter(lambda x: x!=0, a_t)[0])
 				action = np.where(a_t == 1)[0][0]
 				x_t1_col, r_t, terminal, _ = game_state.step(action)
 				if terminal:
