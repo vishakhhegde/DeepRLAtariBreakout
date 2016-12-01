@@ -15,7 +15,7 @@ EXPLORE = 1000. # frames over which to anneal epsilon
 FINAL_EPSILON = 0.05 # final value of epsilon
 INITIAL_EPSILON = 1.0 # starting value of epsilon
 REPLAY_MEMORY = 500000 # number of previous transitions to remember
-BATCH = 128 # size of minibatch
+BATCH = 32 # size of minibatch
 LEARNING_RATE = 0.00025
 K = 1 # only select an action every Kth frame, repeat prev for others
 
