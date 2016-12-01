@@ -10,12 +10,13 @@ from utils import *
 GAME = 'Breakout-v0'
 ACTIONS = 6 # number of valid actions
 GAMMA = 0.99 # decay rate of past observations
-OBSERVE = 10000. # timesteps to observe before training
-EXPLORE = 10000. # frames over which to anneal epsilon
-FINAL_EPSILON = 0.1 # final value of epsilon
+OBSERVE = 1000. # timesteps to observe before training
+EXPLORE = 1000. # frames over which to anneal epsilon
+FINAL_EPSILON = 0.05 # final value of epsilon
 INITIAL_EPSILON = 1.0 # starting value of epsilon
 REPLAY_MEMORY = 500000 # number of previous transitions to remember
 BATCH = 128 # size of minibatch
+LEARNING_RATE = 0.00025
 K = 1 # only select an action every Kth frame, repeat prev for others
 
 game_state = gym.make(GAME)
@@ -32,10 +33,10 @@ class deepRL_model():
 		W_conv3 = weight_variable([3, 3, 64, 64])
 		b_conv3 = bias_variable([64])
 
-		W_fc1 = weight_variable([1600, 512])
-		b_fc1 = bias_variable([512])
+		W_fc1 = weight_variable([576, 64])
+		b_fc1 = bias_variable([64])
 
-		W_fc2 = weight_variable([512, ACTIONS])
+		W_fc2 = weight_variable([64, ACTIONS])
 		b_fc2 = bias_variable([ACTIONS])
 
 		s = tf.placeholder("float", [None, 80, 80, 4])
@@ -45,10 +46,11 @@ class deepRL_model():
 		h_pool1 = max_pool_2x2(h_conv1)
 
 		h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2, 2) + b_conv2)
+		h_pool2 = max_pool_2x2(h_conv2)
 
-		h_conv3 = tf.nn.relu(conv2d(h_conv2, W_conv3, 1) + b_conv3)
-
-		h_conv3_flat = tf.reshape(h_conv3, [-1, 1600])
+#		h_conv3 = tf.nn.relu(conv2d(h_pool2, W_conv3, 1) + b_conv3)
+		print h_pool2
+		h_conv3_flat = tf.reshape(h_pool2, [-1, 576])
 
 		h_fc1 = tf.nn.relu(tf.matmul(h_conv3_flat, W_fc1) + b_fc1)
 
@@ -62,7 +64,7 @@ class deepRL_model():
 		y = tf.placeholder("float", [None])
 		readout_action = tf.reduce_sum(tf.mul(readout, a), reduction_indices = 1)
 		cost = tf.reduce_mean(tf.square(y - readout_action))
-		train_step = tf.train.AdamOptimizer(1e-6).minimize(cost)
+		train_step = tf.train.AdamOptimizer(LEARNING_RATE).minimize(cost)
 
 	    # store the previous observations in replay memory
 		D = deque()
@@ -75,7 +77,6 @@ class deepRL_model():
 		do_nothing = np.zeros(ACTIONS)
 		do_nothing[0] = 1
 
-	# We need to change this
 		action = np.where(do_nothing == 1)[0][0]
 		x_t, r_0, terminal, _ = game_state.step(action)
 		x_t = cv2.cvtColor(cv2.resize(x_t, (80, 80)), cv2.COLOR_BGR2GRAY)
@@ -170,5 +171,5 @@ class deepRL_model():
 				state = "explore"
 			else:
 				state = "train"
-			if t % 1000 == 0:
+			if t % 10 == 0:
 				print "TIMESTEP", t, "/ STATE", state, "/ EPSILON", epsilon, "/ ACTION", action_index, "/ REWARD", r_t, "/ Q_MAX %e" % np.max(readout_t)
