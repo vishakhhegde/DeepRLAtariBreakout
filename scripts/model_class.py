@@ -6,20 +6,24 @@ import numpy as np
 import sys, os
 import random
 from utils import *
+import copy
 
 GAME = 'Breakout-v0'
+REPLAY_MEMORY = 250000 # number of previous transitions to remember
 ACTIONS = 6 # number of valid actions
 GAMMA = 0.99 # decay rate of past observations
-OBSERVE = 1000. # timesteps to observe before training
-EXPLORE = 1000. # frames over which to anneal epsilon
-FINAL_EPSILON = 0.05 # final value of epsilon
+OBSERVE = 500. # timesteps to observe before training
+EXPLORE = 100000 # frames over which to anneal epsilon
+FINAL_EPSILON = 0.1 # final value of epsilon
 INITIAL_EPSILON = 1.0 # starting value of epsilon
-REPLAY_MEMORY = 500000 # number of previous transitions to remember
 BATCH = 32 # size of minibatch
-LEARNING_RATE = 0.00025
+LEARNING_RATE = 0.0001
+NUM_TEST_GAMES = 100
+TEST_EPSILON = 0.05
 K = 1 # only select an action every Kth frame, repeat prev for others
 
 game_state = gym.make(GAME)
+SAVED_NETWORKS_PATH = 'saved_networks4'
 
 class deepRL_model():
 	def createBaseNetwork(self):
@@ -33,30 +37,32 @@ class deepRL_model():
 		W_conv3 = weight_variable([3, 3, 64, 64])
 		b_conv3 = bias_variable([64])
 
-		W_fc1 = weight_variable([576, 64])
-		b_fc1 = bias_variable([64])
+		W_fc1 = weight_variable([6400, 512])
+		b_fc1 = bias_variable([512])
 
-		W_fc2 = weight_variable([64, ACTIONS])
+		W_fc2 = weight_variable([512, ACTIONS])
 		b_fc2 = bias_variable([ACTIONS])
 
 		s = tf.placeholder("float", [None, 80, 80, 4])
 
 	    # hidden layers
 		h_conv1 = tf.nn.relu(conv2d(s, W_conv1, 4) + b_conv1)
-		h_pool1 = max_pool_2x2(h_conv1)
+#		h_pool1 = max_pool_2x2(h_conv1)
 
-		h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2, 2) + b_conv2)
-		h_pool2 = max_pool_2x2(h_conv2)
+		h_conv2 = tf.nn.relu(conv2d(h_conv1, W_conv2, 2) + b_conv2)
+#		h_pool2 = max_pool_2x2(h_conv2)
 
-#		h_conv3 = tf.nn.relu(conv2d(h_pool2, W_conv3, 1) + b_conv3)
-		print h_pool2
-		h_conv3_flat = tf.reshape(h_pool2, [-1, 576])
+		h_conv3 = tf.nn.relu(conv2d(h_conv2, W_conv3, 1) + b_conv3)
+		print h_conv3
+		h_conv3_flat = tf.reshape(h_conv3, [-1, 6400])
 
 		h_fc1 = tf.nn.relu(tf.matmul(h_conv3_flat, W_fc1) + b_fc1)
 
 		readout = tf.matmul(h_fc1, W_fc2) + b_fc2
 
 		return s, readout, h_fc1
+
+
 
 	def trainNetwork(self,s, readout, h_fc1, sess):
 	    # define the cost function
@@ -87,7 +93,7 @@ class deepRL_model():
 	    # saving and loading networks
 		saver = tf.train.Saver()
 		sess.run(tf.initialize_all_variables())
-		checkpoint = tf.train.get_checkpoint_state("saved_networks")
+		checkpoint = tf.train.get_checkpoint_state(SAVED_NETWORKS_PATH)
 		if checkpoint and checkpoint.model_checkpoint_path:
 		    saver.restore(sess, checkpoint.model_checkpoint_path)
 		    print "Successfully loaded:", checkpoint.model_checkpoint_path
@@ -160,8 +166,8 @@ class deepRL_model():
 			t += 1
 
 	        # save progress every 10000 iterations
-			if t % 10000 == 0:
-				saver.save(sess, 'saved_networks/' + GAME + '-dqn', global_step = t)
+			if t % 50000 == 0:
+				saver.save(sess, SAVED_NETWORKS_PATH + '/' + GAME + '-dqn', global_step = t)
 
 			# print info
 			state = ""
@@ -173,3 +179,55 @@ class deepRL_model():
 				state = "train"
 			if t % 10 == 0:
 				print "TIMESTEP", t, "/ STATE", state, "/ EPSILON", epsilon, "/ ACTION", action_index, "/ REWARD", r_t, "/ Q_MAX %e" % np.max(readout_t)
+
+	def testNetwork(self, s, readout, h_fc1, sess):
+		# Initialization of the state
+		do_nothing = np.zeros(ACTIONS)
+		do_nothing[0] = 1
+
+		action = np.where(do_nothing == 1)[0][0]
+		x_t, r_0, terminal, _ = game_state.step(action)
+		x_t = cv2.cvtColor(cv2.resize(x_t, (80, 80)), cv2.COLOR_BGR2GRAY)
+
+		ret, x_t = cv2.threshold(x_t,1,255,cv2.THRESH_BINARY)
+		s_t = np.stack((x_t, x_t, x_t, x_t), axis = 2)
+		####################################
+
+		saver = tf.train.Saver()
+
+		checkpoint = tf.train.get_checkpoint_state(SAVED_NETWORKS_PATH)
+		if checkpoint and checkpoint.model_checkpoint_path:
+			saver.restore(sess, checkpoint.model_checkpoint_path)
+			print "Successfully loaded:", checkpoint.model_checkpoint_path
+		else:
+			print "Could not find old network weights"
+			return
+
+		# Play the game a fixed number of steps
+		i = 0
+		game_score = 0
+		while i < NUM_TEST_GAMES:
+#			game_state.render()
+			readout_t = readout.eval(feed_dict = {s : [s_t]})[0]
+			if random.random() <= TEST_EPSILON:
+				action = random.randrange(ACTIONS)
+			else:
+				action = np.argmax(readout_t)
+
+			for j in range(0, K):
+	            # run the selected action and observe next state and reward
+#				action = np.where(a_t == 1)[0][0]
+				x_t1_col, r_t, terminal, _ = game_state.step(action)
+				game_score += r_t
+				if terminal:
+					_ = game_state.reset()
+					print 'game_score = ', game_score
+					game_score = 0
+					i += 1
+				x_t1 = cv2.cvtColor(cv2.resize(x_t1_col, (80, 80)), cv2.COLOR_BGR2GRAY)
+				ret, x_t1 = cv2.threshold(x_t1,1,255,cv2.THRESH_BINARY)
+				x_t1 = np.reshape(x_t1, (80, 80, 1))
+				s_t1 = np.append(x_t1, s_t[:,:,0:3], axis = 2)
+
+			s_t = copy.deepcopy(s_t1)
+
