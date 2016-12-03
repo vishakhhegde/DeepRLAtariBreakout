@@ -1,6 +1,6 @@
 GAME = 'Breakout-v0'
 REPLAY_MEMORY = 250000 # number of previous transitions to remember
-ACTIONS = 6 # number of valid actions
+NUM_ACTIONS = 6 # number of valid actions
 GAMMA = 0.99 # decay rate of past observations
 OBSERVE = 500. # timesteps to observe before training
 EXPLORE = 100000 # frames over which to anneal epsilon
@@ -11,4 +11,3 @@ LEARNING_RATE = 0.0001
 NUM_TEST_GAMES = 100
 TEST_EPSILON = 0.05
 K = 1 # only select an action every Kth frame, repeat prev for others
-SAVED_NETWORKS_PATH = 'saved_networks4'

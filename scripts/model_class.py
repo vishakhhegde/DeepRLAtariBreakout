@@ -12,6 +12,10 @@ from training_parameters import *
 game_state = gym.make(GAME)
 
 class deepRL_model():
+
+	def __init__(self, SAVED_NETWORKS_PATH):
+		self.SAVED_NETWORKS_PATH = SAVED_NETWORKS_PATH
+
 	def createBaseNetwork(self):
 		# Define weights of the network
 		W_conv1 = weight_variable([8, 8, 4, 32])
@@ -26,23 +30,21 @@ class deepRL_model():
 		W_fc1 = weight_variable([6400, 512])
 		b_fc1 = bias_variable([512])
 
-		W_fc2 = weight_variable([512, ACTIONS])
-		b_fc2 = bias_variable([ACTIONS])
+		W_fc2 = weight_variable([512, NUM_ACTIONS])
+		b_fc2 = bias_variable([NUM_ACTIONS])
 
 		s = tf.placeholder("float", [None, 80, 80, 4])
 
 	    # hidden layers
-		h_conv1 = tf.nn.relu(conv2d(s, W_conv1, 4) + b_conv1)
-#		h_pool1 = max_pool_2x2(h_conv1)
+		conv1 = tf.nn.relu(conv2d(s, W_conv1, 4) + b_conv1)
 
-		h_conv2 = tf.nn.relu(conv2d(h_conv1, W_conv2, 2) + b_conv2)
-#		h_pool2 = max_pool_2x2(h_conv2)
+		conv2 = tf.nn.relu(conv2d(conv1, W_conv2, 2) + b_conv2)
 
-		h_conv3 = tf.nn.relu(conv2d(h_conv2, W_conv3, 1) + b_conv3)
-		print h_conv3
-		h_conv3_flat = tf.reshape(h_conv3, [-1, 6400])
+		conv3 = tf.nn.relu(conv2d(conv2, W_conv3, 1) + b_conv3)
+		print conv3
+		conv3_flat = tf.reshape(conv3, [-1, 6400])
 
-		h_fc1 = tf.nn.relu(tf.matmul(h_conv3_flat, W_fc1) + b_fc1)
+		h_fc1 = tf.nn.relu(tf.matmul(conv3_flat, W_fc1) + b_fc1)
 
 		Qvalues = tf.matmul(h_fc1, W_fc2) + b_fc2
 
@@ -52,7 +54,7 @@ class deepRL_model():
 
 	def trainNetwork(self,s, Qvalues, h_fc1, sess):
 	    # define the cost function
-		a = tf.placeholder("float", [None, ACTIONS])
+		a = tf.placeholder("float", [None, NUM_ACTIONS])
 		y = tf.placeholder("float", [None])
 		readout_action = tf.reduce_sum(tf.mul(Qvalues, a), reduction_indices = 1)
 		cost = tf.reduce_mean(tf.square(y - readout_action))
@@ -61,12 +63,8 @@ class deepRL_model():
 	    # store the previous observations in replay memory
 		D = deque()
 
-	    # printing
-		a_file = open("logs_" + GAME + "/readout.txt", 'w')
-		h_file = open("logs_" + GAME + "/hidden.txt", 'w')
-
 	    # get the first state by doing nothing and preprocess the image to 80x80x4
-		do_nothing = np.zeros(ACTIONS)
+		do_nothing = np.zeros(NUM_ACTIONS)
 		do_nothing[0] = 1
 
 		action = np.where(do_nothing == 1)[0][0]
@@ -79,7 +77,7 @@ class deepRL_model():
 	    # saving and loading networks
 		saver = tf.train.Saver()
 		sess.run(tf.initialize_all_variables())
-		checkpoint = tf.train.get_checkpoint_state(SAVED_NETWORKS_PATH)
+		checkpoint = tf.train.get_checkpoint_state(self.SAVED_NETWORKS_PATH)
 		if checkpoint and checkpoint.model_checkpoint_path:
 		    saver.restore(sess, checkpoint.model_checkpoint_path)
 		    print "Successfully loaded:", checkpoint.model_checkpoint_path
@@ -92,10 +90,10 @@ class deepRL_model():
 		    # choose an action epsilon greedily
 #			game_state.render()
 			readout_t = Qvalues.eval(feed_dict = {s : [s_t]})[0]
-			a_t = np.zeros([ACTIONS])
+			a_t = np.zeros([NUM_ACTIONS])
 			action_index = 0
 			if random.random() <= epsilon or t <= OBSERVE:
-				action_index = random.randrange(ACTIONS)
+				action_index = random.randrange(NUM_ACTIONS)
 				a_t[action_index] = 1
 			else:
 				action_index = np.argmax(readout_t)
@@ -153,7 +151,7 @@ class deepRL_model():
 
 	        # save progress every 10000 iterations
 			if t % 50000 == 0:
-				saver.save(sess, SAVED_NETWORKS_PATH + '/' + GAME + '-dqn', global_step = t)
+				saver.save(sess, self.SAVED_NETWORKS_PATH + '/' + GAME + '-dqn', global_step = t)
 
 			# print info
 			state = ""
@@ -167,8 +165,9 @@ class deepRL_model():
 				print "TIMESTEP", t, "/ STATE", state, "/ EPSILON", epsilon, "/ ACTION", action_index, "/ REWARD", r_t, "/ Q_MAX %e" % np.max(readout_t)
 
 	def testNetwork(self, s, Qvalues, h_fc1, sess):
+		self.SAVED_NETWORKS_PATH
 		# Initialization of the state
-		do_nothing = np.zeros(ACTIONS)
+		do_nothing = np.zeros(NUM_ACTIONS)
 		do_nothing[0] = 1
 
 		action = np.where(do_nothing == 1)[0][0]
@@ -179,15 +178,17 @@ class deepRL_model():
 		s_t = np.stack((x_t, x_t, x_t, x_t), axis = 2)
 		####################################
 
+		# Load the meta file and the checkpoint #
 		saver = tf.train.Saver()
 
-		checkpoint = tf.train.get_checkpoint_state(SAVED_NETWORKS_PATH)
+		checkpoint = tf.train.get_checkpoint_state(self.SAVED_NETWORKS_PATH)
 		if checkpoint and checkpoint.model_checkpoint_path:
 			saver.restore(sess, checkpoint.model_checkpoint_path)
 			print "Successfully loaded:", checkpoint.model_checkpoint_path
 		else:
 			print "Could not find old network weights"
 			return
+		###############################################
 
 		# Play the game a fixed number of steps
 		i = 0
@@ -196,13 +197,12 @@ class deepRL_model():
 #			game_state.render()
 			readout_t = Qvalues.eval(feed_dict = {s : [s_t]})[0]
 			if random.random() <= TEST_EPSILON:
-				action = random.randrange(ACTIONS)
+				action = random.randrange(NUM_ACTIONS)
 			else:
 				action = np.argmax(readout_t)
 
 			for j in range(0, K):
 	            # run the selected action and observe next state and reward
-#				action = np.where(a_t == 1)[0][0]
 				x_t1_col, r_t, terminal, _ = game_state.step(action)
 				game_score += r_t
 				if terminal:

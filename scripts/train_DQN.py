@@ -14,24 +14,23 @@ def createSess():
 	sess = tf.InteractiveSession(config=tf.ConfigProto(gpu_options=gpu_options))
 	return sess
 
-def trainAgent():
+def trainAgent(SAVED_NETWORKS_PATH):
 	sess = createSess()
-	Model =	deepRL_model()
+	Model =	deepRL_model(SAVED_NETWORKS_PATH)
 	s, readout, h_fc1 = Model.createBaseNetwork()
-#	s, readout, h_fc1 = createNetwork()
 	Model.trainNetwork(s, readout, h_fc1, sess)
 
-def testAgent():
+def testAgent(SAVED_NETWORKS_PATH):
 	sess = createSess()
-	Model = deepRL_model()
+	Model = deepRL_model(SAVED_NETWORKS_PATH)
 	s, readout, h_fc1 = Model.createBaseNetwork()
 	Model.testNetwork(s, readout, h_fc1, sess)
 
-def main(runas):
+def main(runas, SAVED_NETWORKS_PATH):
 	if runas == 'train':
-		trainAgent()
+		trainAgent(SAVED_NETWORKS_PATH)
 	elif runas == 'test':
-		testAgent()
+		testAgent(SAVED_NETWORKS_PATH)
 	else:
 		print 'Invalid argument'
 		return
@@ -39,6 +38,7 @@ def main(runas):
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--runas', type=str, help='Run train or test')
+	parser.add_argument('--SAVED_NETWORKS_PATH', type=str, help='Path to the saved networks for a given set of training parameters')
 	args = parser.parse_args()
-	runas = args.runas
-	main(runas)
+
+	main(args.runas, args.SAVED_NETWORKS_PATH)
