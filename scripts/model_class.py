@@ -44,17 +44,17 @@ class deepRL_model():
 
 		h_fc1 = tf.nn.relu(tf.matmul(h_conv3_flat, W_fc1) + b_fc1)
 
-		readout = tf.matmul(h_fc1, W_fc2) + b_fc2
+		Qvalues = tf.matmul(h_fc1, W_fc2) + b_fc2
 
-		return s, readout, h_fc1
+		return s, Qvalues, h_fc1
 
 
 
-	def trainNetwork(self,s, readout, h_fc1, sess):
+	def trainNetwork(self,s, Qvalues, h_fc1, sess):
 	    # define the cost function
 		a = tf.placeholder("float", [None, ACTIONS])
 		y = tf.placeholder("float", [None])
-		readout_action = tf.reduce_sum(tf.mul(readout, a), reduction_indices = 1)
+		readout_action = tf.reduce_sum(tf.mul(Qvalues, a), reduction_indices = 1)
 		cost = tf.reduce_mean(tf.square(y - readout_action))
 		train_step = tf.train.AdamOptimizer(LEARNING_RATE).minimize(cost)
 
@@ -91,7 +91,7 @@ class deepRL_model():
 		while(1):
 		    # choose an action epsilon greedily
 #			game_state.render()
-			readout_t = readout.eval(feed_dict = {s : [s_t]})[0]
+			readout_t = Qvalues.eval(feed_dict = {s : [s_t]})[0]
 			a_t = np.zeros([ACTIONS])
 			action_index = 0
 			if random.random() <= epsilon or t <= OBSERVE:
@@ -133,7 +133,7 @@ class deepRL_model():
 				s_j1_batch = [d[3] for d in minibatch]
 
 				y_batch = []
-				readout_j1_batch = readout.eval(feed_dict = {s : s_j1_batch})
+				readout_j1_batch = Qvalues.eval(feed_dict = {s : s_j1_batch})
 				for i in range(0, len(minibatch)):
 	                # if terminal only equals reward
 					if minibatch[i][4]:
@@ -166,7 +166,7 @@ class deepRL_model():
 			if t % 10 == 0:
 				print "TIMESTEP", t, "/ STATE", state, "/ EPSILON", epsilon, "/ ACTION", action_index, "/ REWARD", r_t, "/ Q_MAX %e" % np.max(readout_t)
 
-	def testNetwork(self, s, readout, h_fc1, sess):
+	def testNetwork(self, s, Qvalues, h_fc1, sess):
 		# Initialization of the state
 		do_nothing = np.zeros(ACTIONS)
 		do_nothing[0] = 1
@@ -194,7 +194,7 @@ class deepRL_model():
 		game_score = 0
 		while i < NUM_TEST_GAMES:
 #			game_state.render()
-			readout_t = readout.eval(feed_dict = {s : [s_t]})[0]
+			readout_t = Qvalues.eval(feed_dict = {s : [s_t]})[0]
 			if random.random() <= TEST_EPSILON:
 				action = random.randrange(ACTIONS)
 			else:
