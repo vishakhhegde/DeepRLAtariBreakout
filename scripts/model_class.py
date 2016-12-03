@@ -8,12 +8,17 @@ import random
 from utils import *
 import copy
 from training_parameters import *
+from shutil import copyfile
 
 game_state = gym.make(GAME)
+NUM_TEST_GAMES = 100
+K = 1 # only select an action every Kth frame, repeat prev for others
+TEST_EPSILON = 0.05
 
 class deepRL_model():
-
 	def __init__(self, SAVED_NETWORKS_PATH):
+		ensure_dir_exists(SAVED_NETWORKS_PATH)
+		copyfile('training_parameters.py', os.path.join(SAVED_NETWORKS_PATH,'training_parameters.py'))
 		self.SAVED_NETWORKS_PATH = SAVED_NETWORKS_PATH
 
 	def createBaseNetwork(self):
@@ -49,7 +54,6 @@ class deepRL_model():
 		Qvalues = tf.matmul(h_fc1, W_fc2) + b_fc2
 
 		return s, Qvalues, h_fc1
-
 
 
 	def trainNetwork(self,s, Qvalues, h_fc1, sess):
