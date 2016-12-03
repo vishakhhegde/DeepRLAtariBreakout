@@ -7,23 +7,9 @@ import sys, os
 import random
 from utils import *
 import copy
-
-GAME = 'Breakout-v0'
-REPLAY_MEMORY = 250000 # number of previous transitions to remember
-ACTIONS = 6 # number of valid actions
-GAMMA = 0.99 # decay rate of past observations
-OBSERVE = 500. # timesteps to observe before training
-EXPLORE = 100000 # frames over which to anneal epsilon
-FINAL_EPSILON = 0.1 # final value of epsilon
-INITIAL_EPSILON = 1.0 # starting value of epsilon
-BATCH = 32 # size of minibatch
-LEARNING_RATE = 0.0001
-NUM_TEST_GAMES = 100
-TEST_EPSILON = 0.05
-K = 1 # only select an action every Kth frame, repeat prev for others
+from training_parameters import *
 
 game_state = gym.make(GAME)
-SAVED_NETWORKS_PATH = 'saved_networks4'
 
 class deepRL_model():
 	def createBaseNetwork(self):
