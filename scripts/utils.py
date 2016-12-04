@@ -2,6 +2,10 @@ import tensorflow as tf
 import numpy as np
 import sys, os
 
+def ensure_dir_exists(dir_name):
+	if not os.path.exists(dir_name):
+		os.makedirs(dir_name)
+
 def weight_variable(shape):
     initial = tf.truncated_normal(shape, stddev = 0.01)
     return tf.Variable(initial)

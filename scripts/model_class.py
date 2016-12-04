@@ -13,51 +13,80 @@ from shutil import copyfile
 game_state = gym.make(GAME)
 NUM_TEST_GAMES = 100
 K = 1 # only select an action every Kth frame, repeat prev for others
-TEST_EPSILON = 0.05
+TEST_EPSILON = 1.0
 
 class deepRL_model():
-	def __init__(self, SAVED_NETWORKS_PATH):
-		ensure_dir_exists(SAVED_NETWORKS_PATH)
-		copyfile('training_parameters.py', os.path.join(SAVED_NETWORKS_PATH,'training_parameters.py'))
+	def __init__(self, SAVED_NETWORKS_PATH, networkName):		
 		self.SAVED_NETWORKS_PATH = SAVED_NETWORKS_PATH
+		self.networkName = networkName
 
 	def createBaseNetwork(self):
+		if self.networkName == '3LayerConv':
 		# Define weights of the network
-		W_conv1 = weight_variable([8, 8, 4, 32])
-		b_conv1 = bias_variable([32])
+			W_conv1 = weight_variable([8, 8, 4, 32])
+			b_conv1 = bias_variable([32])
 
-		W_conv2 = weight_variable([4, 4, 32, 64])
-		b_conv2 = bias_variable([64])
+			W_conv2 = weight_variable([4, 4, 32, 64])
+			b_conv2 = bias_variable([64])
 
-		W_conv3 = weight_variable([3, 3, 64, 64])
-		b_conv3 = bias_variable([64])
+			W_conv3 = weight_variable([3, 3, 64, 64])
+			b_conv3 = bias_variable([64])
 
-		W_fc1 = weight_variable([6400, 512])
-		b_fc1 = bias_variable([512])
+			W_fc1 = weight_variable([6400, 512])
+			b_fc1 = bias_variable([512])
 
-		W_fc2 = weight_variable([512, NUM_ACTIONS])
-		b_fc2 = bias_variable([NUM_ACTIONS])
+			W_fc2 = weight_variable([512, NUM_ACTIONS])
+			b_fc2 = bias_variable([NUM_ACTIONS])
 
-		s = tf.placeholder("float", [None, 80, 80, 4])
+			s = tf.placeholder("float", [None, 80, 80, 4])
 
-	    # hidden layers
-		conv1 = tf.nn.relu(conv2d(s, W_conv1, 4) + b_conv1)
+		    # hidden layers
+			conv1 = tf.nn.relu(conv2d(s, W_conv1, 4) + b_conv1)
 
-		conv2 = tf.nn.relu(conv2d(conv1, W_conv2, 2) + b_conv2)
+			conv2 = tf.nn.relu(conv2d(conv1, W_conv2, 2) + b_conv2)
 
-		conv3 = tf.nn.relu(conv2d(conv2, W_conv3, 1) + b_conv3)
-		print conv3
-		conv3_flat = tf.reshape(conv3, [-1, 6400])
+			conv3 = tf.nn.relu(conv2d(conv2, W_conv3, 1) + b_conv3)
 
-		h_fc1 = tf.nn.relu(tf.matmul(conv3_flat, W_fc1) + b_fc1)
+			conv3_flat = tf.reshape(conv3, [-1, 6400])
 
-		Qvalues = tf.matmul(h_fc1, W_fc2) + b_fc2
+			h_fc1 = tf.nn.relu(tf.matmul(conv3_flat, W_fc1) + b_fc1)
 
-		return s, Qvalues, h_fc1
+			Qvalues = tf.matmul(h_fc1, W_fc2) + b_fc2
+
+			return s, Qvalues, h_fc1
+
+		elif self.networkName == '1LayerFC':
+			W_fc1 = weight_variable([6400, 512])
+			b_fc1 = bias_variable([512])
+
+			W_fc2 = weight_variable([512, NUM_ACTIONS])
+			b_fc2 = bias_variable([NUM_ACTIONS])
+
+			s = tf.placeholder("float", [None, 80, 80, 4])
+
+			# The actual network
+			pool1 = max_pool_2x2(s)
+			flat = tf.reshape(pool1, [-1, 6400])
+			h_fc1 = tf.nn.relu(tf.matmul(flat, W_fc1) + b_fc1)
+			Qvalues = tf.matmul(h_fc1, W_fc2) + b_fc2
+			return s, Qvalues, h_fc1
+
+
+		else:
+			print 'Not a valid network name'
+			return
 
 
 	def trainNetwork(self,s, Qvalues, h_fc1, sess):
 	    # define the cost function
+		ensure_dir_exists(self.SAVED_NETWORKS_PATH)
+		dest_path = os.path.join(self.SAVED_NETWORKS_PATH,'training_parameters.py')
+		copyfile('training_parameters.py', dest_path)
+
+		f = open(dest_path, 'a')
+		f.write('networkName = {}'.format(self.networkName))
+		f.close()
+
 		a = tf.placeholder("float", [None, NUM_ACTIONS])
 		y = tf.placeholder("float", [None])
 		readout_action = tf.reduce_sum(tf.mul(Qvalues, a), reduction_indices = 1)
@@ -154,7 +183,7 @@ class deepRL_model():
 			t += 1
 
 	        # save progress every 10000 iterations
-			if t % 50000 == 0:
+			if t % 15000 == 0:
 				saver.save(sess, self.SAVED_NETWORKS_PATH + '/' + GAME + '-dqn', global_step = t)
 
 			# print info
@@ -169,7 +198,6 @@ class deepRL_model():
 				print "TIMESTEP", t, "/ STATE", state, "/ EPSILON", epsilon, "/ ACTION", action_index, "/ REWARD", r_t, "/ Q_MAX %e" % np.max(readout_t)
 
 	def testNetwork(self, s, Qvalues, h_fc1, sess):
-		self.SAVED_NETWORKS_PATH
 		# Initialization of the state
 		do_nothing = np.zeros(NUM_ACTIONS)
 		do_nothing[0] = 1
@@ -187,6 +215,7 @@ class deepRL_model():
 
 		checkpoint = tf.train.get_checkpoint_state(self.SAVED_NETWORKS_PATH)
 		if checkpoint and checkpoint.model_checkpoint_path:
+			checkpoint_IterNum = checkpoint.model_checkpoint_path.split('-')[-1]
 			saver.restore(sess, checkpoint.model_checkpoint_path)
 			print "Successfully loaded:", checkpoint.model_checkpoint_path
 		else:
@@ -197,6 +226,9 @@ class deepRL_model():
 		# Play the game a fixed number of steps
 		i = 0
 		game_score = 0
+		allGameScores = []
+		f = open(os.path.join(self.SAVED_NETWORKS_PATH, 'test_results_' + checkpoint_IterNum + '.txt'), 'w')
+		f.write('GAME_SCORES\n')
 		while i < NUM_TEST_GAMES:
 #			game_state.render()
 			readout_t = Qvalues.eval(feed_dict = {s : [s_t]})[0]
@@ -212,6 +244,8 @@ class deepRL_model():
 				if terminal:
 					_ = game_state.reset()
 					print 'game_score = ', game_score
+					allGameScores.append(game_score)
+					f.write(str(game_score) + '\n')
 					game_score = 0
 					i += 1
 				x_t1 = cv2.cvtColor(cv2.resize(x_t1_col, (80, 80)), cv2.COLOR_BGR2GRAY)
@@ -220,4 +254,9 @@ class deepRL_model():
 				s_t1 = np.append(x_t1, s_t[:,:,0:3], axis = 2)
 
 			s_t = copy.deepcopy(s_t1)
+		avg_gameScore = sum(allGameScores)/NUM_TEST_GAMES
+		max_gameScore = max(allGameScores)
+		f.write('Average GameScore = {} \n'.format(avg_gameScore))
+		f.write('Max GameScore = {} \n'.format(max_gameScore))
+		f.close()
 

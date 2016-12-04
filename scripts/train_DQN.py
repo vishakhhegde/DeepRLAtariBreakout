@@ -14,23 +14,23 @@ def createSess():
 	sess = tf.InteractiveSession(config=tf.ConfigProto(gpu_options=gpu_options))
 	return sess
 
-def trainAgent(SAVED_NETWORKS_PATH):
+def trainAgent(SAVED_NETWORKS_PATH, networkName):
 	sess = createSess()
-	Model =	deepRL_model(SAVED_NETWORKS_PATH)
+	Model =	deepRL_model(SAVED_NETWORKS_PATH, networkName)
 	s, readout, h_fc1 = Model.createBaseNetwork()
 	Model.trainNetwork(s, readout, h_fc1, sess)
 
-def testAgent(SAVED_NETWORKS_PATH):
+def testAgent(SAVED_NETWORKS_PATH, networkName):
 	sess = createSess()
-	Model = deepRL_model(SAVED_NETWORKS_PATH)
+	Model = deepRL_model(SAVED_NETWORKS_PATH, networkName)
 	s, readout, h_fc1 = Model.createBaseNetwork()
 	Model.testNetwork(s, readout, h_fc1, sess)
 
-def main(runas, SAVED_NETWORKS_PATH):
+def main(runas, SAVED_NETWORKS_PATH, networkName):
 	if runas == 'train':
-		trainAgent(SAVED_NETWORKS_PATH)
+		trainAgent(SAVED_NETWORKS_PATH, networkName)
 	elif runas == 'test':
-		testAgent(SAVED_NETWORKS_PATH)
+		testAgent(SAVED_NETWORKS_PATH, networkName)
 	else:
 		print 'Invalid argument'
 		return
@@ -39,6 +39,7 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--runas', type=str, help='Run train or test')
 	parser.add_argument('--SAVED_NETWORKS_PATH', type=str, help='Path to the saved networks for a given set of training parameters')
+	parser.add_argument('--networkName', type=str, default = '3LayerConv', help='Path to the saved networks for a given set of training parameters')
 	args = parser.parse_args()
 
-	main(args.runas, args.SAVED_NETWORKS_PATH)
+	main(args.runas, args.SAVED_NETWORKS_PATH, args.networkName)
