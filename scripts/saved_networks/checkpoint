@@ -1,6 +1,0 @@
-model_checkpoint_path: "Breakout-v0-dqn-240000"
-all_model_checkpoint_paths: "Breakout-v0-dqn-200000"
-all_model_checkpoint_paths: "Breakout-v0-dqn-210000"
-all_model_checkpoint_paths: "Breakout-v0-dqn-220000"
-all_model_checkpoint_paths: "Breakout-v0-dqn-230000"
-all_model_checkpoint_paths: "Breakout-v0-dqn-240000"
