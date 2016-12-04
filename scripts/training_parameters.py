@@ -1,10 +1,10 @@
 GAME = 'Breakout-v0'
-REPLAY_MEMORY = 250000 # number of previous transitions to remember
+REPLAY_MEMORY = 100000 # number of previous transitions to remember
 NUM_ACTIONS = 6 # number of valid actions
 GAMMA = 0.99 # decay rate of past observations
-OBSERVE = 1000. # timesteps to observe before training
+OBSERVE = 5000. # timesteps to observe before training
 EXPLORE = 50000. # frames over which to anneal epsilon
 FINAL_EPSILON = 0.1 # final value of epsilon
 INITIAL_EPSILON = 1.0 # starting value of epsilon
 BATCH = 32 # size of minibatch
-LEARNING_RATE = 0.000001
+LEARNING_RATE = 0.000005

@@ -10,7 +10,7 @@ from utils import *
 import argparse
 
 def createSess():
-	gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.3)
+	gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.8)
 	sess = tf.InteractiveSession(config=tf.ConfigProto(gpu_options=gpu_options))
 	return sess
 

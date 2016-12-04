@@ -1,0 +1,6 @@
+model_checkpoint_path: "/home/ubuntu/DeepRLAtariBreakout/scripts/Params8_extension1//Breakout-v0-dqn-1605000"
+all_model_checkpoint_paths: "/home/ubuntu/DeepRLAtariBreakout/scripts/Params8_extension1//Breakout-v0-dqn-1545000"
+all_model_checkpoint_paths: "/home/ubuntu/DeepRLAtariBreakout/scripts/Params8_extension1//Breakout-v0-dqn-1560000"
+all_model_checkpoint_paths: "/home/ubuntu/DeepRLAtariBreakout/scripts/Params8_extension1//Breakout-v0-dqn-1575000"
+all_model_checkpoint_paths: "/home/ubuntu/DeepRLAtariBreakout/scripts/Params8_extension1//Breakout-v0-dqn-1590000"
+all_model_checkpoint_paths: "/home/ubuntu/DeepRLAtariBreakout/scripts/Params8_extension1//Breakout-v0-dqn-1605000"

@@ -13,7 +13,7 @@ from shutil import copyfile
 game_state = gym.make(GAME)
 NUM_TEST_GAMES = 100
 K = 1 # only select an action every Kth frame, repeat prev for others
-TEST_EPSILON = 1.0
+TEST_EPSILON = 0.05
 
 class deepRL_model():
 	def __init__(self, SAVED_NETWORKS_PATH, networkName):		
@@ -111,9 +111,12 @@ class deepRL_model():
 		saver = tf.train.Saver()
 		sess.run(tf.initialize_all_variables())
 		checkpoint = tf.train.get_checkpoint_state(self.SAVED_NETWORKS_PATH)
+		checkpoint_IterNum = 0
 		if checkpoint and checkpoint.model_checkpoint_path:
-		    saver.restore(sess, checkpoint.model_checkpoint_path)
-		    print "Successfully loaded:", checkpoint.model_checkpoint_path
+			checkpoint_IterNum = int(checkpoint.model_checkpoint_path.split('-')[-1])
+			print checkpoint_IterNum
+			saver.restore(sess, checkpoint.model_checkpoint_path)
+			print "Successfully loaded:", checkpoint.model_checkpoint_path
 		else:
 		    print "Could not find old network weights"
 
@@ -148,7 +151,7 @@ class deepRL_model():
 				s_t1 = np.append(x_t1, s_t[:,:,0:3], axis = 2)
 
 	            # store the transition in D
-				D.append((s_t, a_t, r_t, s_t1, terminal))
+				D.append((s_t, a_t, 5*r_t, s_t1, terminal))
 				if len(D) > REPLAY_MEMORY:
 					D.popleft()
 
@@ -182,9 +185,9 @@ class deepRL_model():
 			s_t = s_t1
 			t += 1
 
-	        # save progress every 10000 iterations
+	        # save progress every 15000 iterations
 			if t % 15000 == 0:
-				saver.save(sess, self.SAVED_NETWORKS_PATH + '/' + GAME + '-dqn', global_step = t)
+				saver.save(sess, self.SAVED_NETWORKS_PATH + '/' + GAME + '-dqn', global_step = t + checkpoint_IterNum)
 
 			# print info
 			state = ""
@@ -229,13 +232,17 @@ class deepRL_model():
 		allGameScores = []
 		f = open(os.path.join(self.SAVED_NETWORKS_PATH, 'test_results_' + checkpoint_IterNum + '.txt'), 'w')
 		f.write('GAME_SCORES\n')
+		random.seed(1)
 		while i < NUM_TEST_GAMES:
 #			game_state.render()
-			readout_t = Qvalues.eval(feed_dict = {s : [s_t]})[0]
-			if random.random() <= TEST_EPSILON:
-				action = random.randrange(NUM_ACTIONS)
+			if not TEST_EPSILON == 1.0:
+				readout_t = Qvalues.eval(feed_dict = {s : [s_t]})[0]
+				if random.random() <= TEST_EPSILON:
+					action = random.randrange(NUM_ACTIONS)
+				else:
+					action = np.argmax(readout_t)
 			else:
-				action = np.argmax(readout_t)
+				action = random.randrange(NUM_ACTIONS)
 
 			for j in range(0, K):
 	            # run the selected action and observe next state and reward
