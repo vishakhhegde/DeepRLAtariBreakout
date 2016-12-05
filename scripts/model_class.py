@@ -9,6 +9,7 @@ from utils import *
 import copy
 from training_parameters import *
 from shutil import copyfile
+from time import sleep
 
 game_state = gym.make(GAME)
 NUM_TEST_GAMES = 100
@@ -244,6 +245,7 @@ class deepRL_model():
 		while i < NUM_TEST_GAMES:
 			if render:
 				game_state.render()
+				sleep(0.1)
 			if not TEST_EPSILON == 1.0:
 				readout_t = Qvalues.eval(feed_dict = {s : [s_t]})[0]
 				if random.random() <= TEST_EPSILON:
