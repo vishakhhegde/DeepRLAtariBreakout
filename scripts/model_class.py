@@ -128,11 +128,14 @@ class deepRL_model():
 			readout_t = Qvalues.eval(feed_dict = {s : [s_t]})[0]
 			a_t = np.zeros([NUM_ACTIONS])
 			action_index = 0
+
 			if random.random() <= epsilon or t <= OBSERVE:
 				action_index = random.randrange(NUM_ACTIONS)
+				isRandom = 1
 				a_t[action_index] = 1
 			else:
 				action_index = np.argmax(readout_t)
+				isRandom = 0
 				a_t[action_index] = 1
 
 	        # scale down epsilon
@@ -151,13 +154,18 @@ class deepRL_model():
 				s_t1 = np.append(x_t1, s_t[:,:,0:3], axis = 2)
 
 	            # store the transition in D
-				D.append((s_t, a_t, 5*r_t, s_t1, terminal))
+	            # If the action was random, the reward is r_t
+	            # If the action was not random, the reward is scaled by 5 to give it a higher weight
+				if not isRandom:
+					D.append((s_t, a_t, 5*r_t, s_t1, terminal))
+				else:
+					D.append((s_t, a_t, r_t, s_t1, terminal))
+
 				if len(D) > REPLAY_MEMORY:
 					D.popleft()
 
-	        # only train if done observing
 			if t > OBSERVE:
-	            # sample a minibatch to train on
+	            # minibatch for training
 				minibatch = random.sample(D, BATCH)
 
 	            # get the batch variables
