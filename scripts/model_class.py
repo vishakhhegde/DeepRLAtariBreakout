@@ -245,7 +245,7 @@ class deepRL_model():
 		while i < NUM_TEST_GAMES:
 			if render:
 				game_state.render()
-				sleep(0.001)
+				sleep(0.005)
 			if not TEST_EPSILON == 1.0:
 				readout_t = Qvalues.eval(feed_dict = {s : [s_t]})[0]
 				if random.random() <= TEST_EPSILON:
