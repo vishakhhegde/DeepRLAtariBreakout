@@ -208,7 +208,7 @@ class deepRL_model():
 			if t % 10 == 0:
 				print "TIMESTEP", t, "/ STATE", state, "/ EPSILON", epsilon, "/ ACTION", action_index, "/ REWARD", r_t, "/ Q_MAX %e" % np.max(readout_t)
 
-	def testNetwork(self, s, Qvalues, h_fc1, sess):
+	def testNetwork(self, s, Qvalues, h_fc1, sess, render):
 		# Initialization of the state
 		do_nothing = np.zeros(NUM_ACTIONS)
 		do_nothing[0] = 1
@@ -242,7 +242,8 @@ class deepRL_model():
 		f.write('GAME_SCORES\n')
 		random.seed(1)
 		while i < NUM_TEST_GAMES:
-#			game_state.render()
+			if render:
+				game_state.render()
 			if not TEST_EPSILON == 1.0:
 				readout_t = Qvalues.eval(feed_dict = {s : [s_t]})[0]
 				if random.random() <= TEST_EPSILON:
