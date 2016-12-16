@@ -1,0 +1,8 @@
+model_checkpoint_path: "/home/ubuntu/DeepRLAtariBreakout/scripts/3LayerConvUniformSampling1//Breakout-v0-105000"
+all_model_checkpoint_paths: "/home/ubuntu/DeepRLAtariBreakout/scripts/3LayerConvUniformSampling1//Breakout-v0-15000"
+all_model_checkpoint_paths: "/home/ubuntu/DeepRLAtariBreakout/scripts/3LayerConvUniformSampling1//Breakout-v0-30000"
+all_model_checkpoint_paths: "/home/ubuntu/DeepRLAtariBreakout/scripts/3LayerConvUniformSampling1//Breakout-v0-45000"
+all_model_checkpoint_paths: "/home/ubuntu/DeepRLAtariBreakout/scripts/3LayerConvUniformSampling1//Breakout-v0-60000"
+all_model_checkpoint_paths: "/home/ubuntu/DeepRLAtariBreakout/scripts/3LayerConvUniformSampling1//Breakout-v0-75000"
+all_model_checkpoint_paths: "/home/ubuntu/DeepRLAtariBreakout/scripts/3LayerConvUniformSampling1//Breakout-v0-90000"
+all_model_checkpoint_paths: "/home/ubuntu/DeepRLAtariBreakout/scripts/3LayerConvUniformSampling1//Breakout-v0-105000"
